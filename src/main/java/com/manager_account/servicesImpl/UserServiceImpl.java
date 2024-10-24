@@ -18,10 +18,14 @@ import com.manager_account.dto.request.RegisterRequest;
 import com.manager_account.dto.response.APICustomize;
 import com.manager_account.dto.response.LoginResponse;
 import com.manager_account.dto.response.RegisterResponse;
+import com.manager_account.entities.Role;
 import com.manager_account.entities.User;
+import com.manager_account.entities.Users_Roles;
 import com.manager_account.enums.ApiError;
 import com.manager_account.exceptions.ErrorLoginException;
+import com.manager_account.repositories.RoleRepository;
 import com.manager_account.repositories.UserRepository;
+import com.manager_account.repositories.UsersRolesRepository;
 import com.manager_account.security.jwt.JwtUtils;
 import com.manager_account.services.UserService;
 
@@ -38,7 +42,13 @@ public class UserServiceImpl implements UserService{
     private UserRepository userRepository;
     
     @Autowired
+    private UsersRolesRepository usersRolesRepository;
+    
+    @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Override
     public APICustomize<LoginResponse> authenticateUser(LoginRequest loginRequest) {
@@ -57,7 +67,7 @@ public class UserServiceImpl implements UserService{
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toSet());
             
-            LoginResponse response = new LoginResponse(userDetails.getUsername(), roles, jwtToken, refreshToken); // Thêm refreshToken vào phản hồi
+            LoginResponse response = new LoginResponse(userDetails.getUsername(), roles, jwtToken, refreshToken);
 
             return new APICustomize<>(ApiError.OK.getCode(), ApiError.OK.getMessage(), response);
         } catch (BadCredentialsException e) {
@@ -69,25 +79,33 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public APICustomize<RegisterResponse> register(RegisterRequest registerRequest) {
 
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            return new APICustomize<>(ApiError.BAD_REQUEST.getCode(), ApiError.BAD_REQUEST.getMessage(), null);
-        }
+	    if (userRepository.existsByUsername(registerRequest.getUsername())) {
+	        return new APICustomize<>(ApiError.BAD_REQUEST.getCode(), ApiError.BAD_REQUEST.getMessage(), null);
+	    }
 
-        User newUser = new User();
-        newUser.setUsername(registerRequest.getUsername());
-        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        newUser.setFullName(registerRequest.getFullName());
-        newUser.setEnabled(true);
+	    User newUser = new User();
+	    newUser.setUsername(registerRequest.getUsername());
+	    newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+	    newUser.setFullName(registerRequest.getFullName());
+	    newUser.setEnabled(true);
 
-        userRepository.save(newUser);
+	    userRepository.save(newUser);
 
-        RegisterResponse response = new RegisterResponse(
-                newUser.getUsername(),
-                newUser.getFullName(),
-                newUser.isEnabled(),
-                "Đăng ký thành công"
-        );
+	    Role role = roleRepository.findByName("ROLE_USER");
+	    Users_Roles ur = new Users_Roles();
+	    ur.setRole(role);
+	    ur.setUser(newUser);
+	    
+	    usersRolesRepository.save(ur);
 
-        return new APICustomize<>(ApiError.CREATED.getCode(), ApiError.CREATED.getMessage(), response);
-    }
+	    RegisterResponse response = new RegisterResponse(
+	            newUser.getUsername(),
+	            newUser.getFullName(),
+	            newUser.isEnabled(),
+	            "Đăng ký thành công"
+	    );
+
+	    return new APICustomize<>(ApiError.CREATED.getCode(), ApiError.CREATED.getMessage(), response);
+	}
+
 }

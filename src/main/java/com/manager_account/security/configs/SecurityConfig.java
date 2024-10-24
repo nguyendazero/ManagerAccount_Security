@@ -16,32 +16,31 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.manager_account.security.jwt.AuthEntryPointJwt;
 import com.manager_account.security.jwt.AuthTokenFilter;
-
+import com.manager_account.security.jwt.AuthAccessDenied;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private static final String[] PUBLIC_ENDPOINTS = {
-		    "/register",
-		    "/signin",
-		    "/**"  
-	};
-	
-	private static final String[] ADMIN_ENDPOINTS = {
-		    "/admin/**"
-	};
-	
-	private static final String[] USER_ENDPOINTS = {
-		    "/user/**"
-	};
-	
+    private static final String[] PUBLIC_ENDPOINTS = {
+        "/register",
+        "/login",
+    };
+    
+    private static final String[] ADMIN_ENDPOINTS = {
+        "/admin/**"
+    };
+    
+    private static final String[] USER_ENDPOINTS = {
+        "/user/**"
+    };
+    
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
-
-//    @Autowired
-//    private CustomUserDetailsService customUserDetailsService;
+    
+    @Autowired
+    private AuthAccessDenied accessDeniedHandler;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -58,35 +57,32 @@ public class SecurityConfig {
         return builder.getAuthenticationManager();
     }
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        return customUserDetailsService;
-//    }
-
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
+        http
+            .exceptionHandling(exceptionHandling -> {
+                exceptionHandling
+                    .authenticationEntryPoint(unauthorizedHandler) // Xử lý 401 Unauthorized
+                    .accessDeniedHandler(accessDeniedHandler); // Xử lý 403 Forbidden
+            })
+            .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                 .requestMatchers(USER_ENDPOINTS).hasRole("USER")
                 .anyRequest().authenticated()
-        );
-
-        http.sessionManagement(session ->
+            )
+            .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        );
-
-        http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
-
-        http.headers(headers -> headers
+            )
+            .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
-        );
-
-        http.csrf(csrf -> csrf.disable());
-
-        http.addFilterBefore(authenticationJwtTokenFilter(),
+            )
+            .csrf(csrf -> csrf.disable())
+            .addFilterBefore(authenticationJwtTokenFilter(),
                 UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+
 }
