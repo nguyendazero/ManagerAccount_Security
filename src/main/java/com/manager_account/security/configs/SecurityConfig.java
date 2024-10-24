@@ -29,6 +29,14 @@ public class SecurityConfig {
 		    "/**"  
 	};
 	
+	private static final String[] ADMIN_ENDPOINTS = {
+		    "/admin/**"
+	};
+	
+	private static final String[] USER_ENDPOINTS = {
+		    "/user/**"
+	};
+	
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
@@ -59,6 +67,8 @@ public class SecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                .requestMatchers(USER_ENDPOINTS).hasRole("USER")
                 .anyRequest().authenticated()
         );
 

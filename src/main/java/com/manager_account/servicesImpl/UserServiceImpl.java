@@ -5,12 +5,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 
 import com.manager_account.dto.request.LoginRequest;
@@ -20,6 +20,7 @@ import com.manager_account.dto.response.LoginResponse;
 import com.manager_account.dto.response.RegisterResponse;
 import com.manager_account.entities.User;
 import com.manager_account.enums.ApiError;
+import com.manager_account.exceptions.ErrorLoginException;
 import com.manager_account.repositories.UserRepository;
 import com.manager_account.security.jwt.JwtUtils;
 import com.manager_account.services.UserService;
@@ -56,14 +57,14 @@ public class UserServiceImpl implements UserService{
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toSet());
             
-            // Tạo phản hồi
             LoginResponse response = new LoginResponse(userDetails.getUsername(), roles, jwtToken, refreshToken); // Thêm refreshToken vào phản hồi
 
             return new APICustomize<>(ApiError.OK.getCode(), ApiError.OK.getMessage(), response);
-        } catch (AuthenticationException e) {
-            throw new RuntimeException("Bad credentials");
+        } catch (BadCredentialsException e) {
+            throw new ErrorLoginException("Sai tên đăng nhập hoặc mật khẩu!");
         }
     }
+
 
 	@Override
 	public APICustomize<RegisterResponse> register(RegisterRequest registerRequest) {
