@@ -44,6 +44,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
     
+    @ExceptionHandler(UserExistException.class)
+    public ResponseEntity<APICustomize<String>> handleUserExistException(UserExistException ex){
+    	//Xử lý lỗi khi đăng ký người dùng với username đã tồn tại
+    	APICustomize<String> response = new APICustomize<String>(ApiError.CONFLICT.getCode(), ex.getMessage(), "Đăng ký thất bại");
+    	return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+    
     @ExceptionHandler(ErrorLoginException.class)
     public ResponseEntity<APICustomize<String>> handleProductNotFoundException(ErrorLoginException ex) {
         //Xử lý Login notFound with username and password

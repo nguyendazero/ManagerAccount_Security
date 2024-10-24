@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,14 +29,12 @@ public class UserController {
     @Autowired
     private UserService userService;
     
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/hello-admin")
     public ResponseEntity<?> xinChaoAdmin(){
     	String response = "Xin chào Admin";
     	return ResponseEntity.status(HttpStatus.OK).body(response);
     }
     
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/user/hello-user")
     public ResponseEntity<?> xinChaoUser(){
     	String response = "Xin chào User";

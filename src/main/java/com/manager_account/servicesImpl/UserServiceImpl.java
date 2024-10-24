@@ -23,6 +23,7 @@ import com.manager_account.entities.User;
 import com.manager_account.entities.Users_Roles;
 import com.manager_account.enums.ApiError;
 import com.manager_account.exceptions.ErrorLoginException;
+import com.manager_account.exceptions.UserExistException;
 import com.manager_account.repositories.RoleRepository;
 import com.manager_account.repositories.UserRepository;
 import com.manager_account.repositories.UsersRolesRepository;
@@ -80,7 +81,7 @@ public class UserServiceImpl implements UserService{
 	public APICustomize<RegisterResponse> register(RegisterRequest registerRequest) {
 
 	    if (userRepository.existsByUsername(registerRequest.getUsername())) {
-	        return new APICustomize<>(ApiError.BAD_REQUEST.getCode(), ApiError.BAD_REQUEST.getMessage(), null);
+	       throw new UserExistException("Tên đăng nhập đã tồn tại!"); 
 	    }
 
 	    User newUser = new User();
